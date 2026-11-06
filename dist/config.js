@@ -55,10 +55,17 @@ function isHttpUrl(value) {
         return false;
     }
 }
+export class ConfigNotFoundError extends Error {
+    constructor(path, status) {
+        super(`Could not load ${path} (${status})`);
+        this.path = path;
+        this.status = status;
+    }
+}
 export async function loadConfig(path = "doors.txt") {
-    // no-cache so edits to doors.txt show up without a hard refresh
+    // no-cache so edits to the config file show up without a hard refresh
     const res = await fetch(path, { cache: "no-cache" });
     if (!res.ok)
-        throw new Error(`Could not load ${path} (${res.status})`);
+        throw new ConfigNotFoundError(path, res.status);
     return parseConfig(await res.text());
 }

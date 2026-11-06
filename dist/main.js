@@ -1,13 +1,6 @@
-import { DAYS, loadConfig } from "./config.js";
+import { ConfigNotFoundError, DAYS, loadConfig } from "./config.js";
+import { normalHref, parseRoute, routeKey } from "./route.js";
 import { DoorState } from "./state.js";
-/* ---------- Routing ---------- */
-/**
- * Superuser mode is reached at <app>/root (needs a server rewrite to index.html)
- * or at <app>/#/root (works on any static host with no setup).
- */
-function isRootRoute() {
-    return /\/root\/?$/.test(location.pathname) || location.hash === "#/root";
-}
 /* ---------- Dates ---------- */
 /** The moment door `day` unlocks: 00:00 UTC on December <day>. */
 function unlockTime(day, year) {
@@ -26,6 +19,15 @@ function describeUnlock(day, year) {
     return `December ${day}, 00:00 UTC (${local} your time)`;
 }
 /* ---------- Layout ---------- */
+/** Turns a calendar name into a number so each calendar gets its own door layout. */
+function nameSeed(name) {
+    if (!name)
+        return 0;
+    let h = 0;
+    for (const ch of name)
+        h = (h * 31 + ch.charCodeAt(0)) % 100000;
+    return h;
+}
 /** Stable shuffled order (same every visit) so numbers look scattered like a real calendar. */
 function shuffledDays(seed) {
     const days = Array.from({ length: DAYS }, (_, i) => i + 1);
@@ -60,10 +62,11 @@ function preload(url) {
     img.src = url;
 }
 class Calendar {
-    constructor(config, state, superuser) {
+    constructor(config, state, superuser, layoutSeed) {
         this.config = config;
         this.state = state;
         this.superuser = superuser;
+        this.layoutSeed = layoutSeed;
         this.views = [];
     }
     canOpen(day) {
@@ -75,7 +78,7 @@ class Calendar {
         this.views = [];
         document.title = this.config.title + (this.superuser ? " (superuser)" : "");
         $("title").textContent = this.config.title;
-        for (const day of shuffledDays(this.config.year)) {
+        for (const day of shuffledDays(this.config.year + this.layoutSeed)) {
             const view = this.buildDoor(day);
             this.views.push(view);
             list.append(view.cell);
@@ -170,23 +173,37 @@ class Calendar {
     }
 }
 /* ---------- Boot ---------- */
+function showError(message, linkHome = true) {
+    $("status").textContent = message;
+    if (linkHome) {
+        const a = document.createElement("a");
+        a.href = "./";
+        a.textContent = "Go to the main calendar";
+        $("status").append(" ", a);
+    }
+}
 async function main() {
+    const route = parseRoute();
+    // Changing the calendar name or #/root in the address bar reloads the app.
+    window.addEventListener("hashchange", () => {
+        if (routeKey(parseRoute()) !== routeKey(route))
+            location.reload();
+    });
+    if (route.error) {
+        showError(route.error);
+        return;
+    }
     try {
-        const config = await loadConfig();
-        const wantsRoot = isRootRoute();
-        const superuser = wantsRoot && config.superuser;
-        if (wantsRoot && !config.superuser) {
+        const config = await loadConfig(route.configFile);
+        const superuser = route.superuser && config.superuser;
+        if (route.superuser && !config.superuser) {
             toast("Superuser mode is turned off for this calendar.");
         }
         $("su-banner").hidden = !superuser;
-        const state = new DoorState(config.year, superuser);
-        const calendar = new Calendar(config, state, superuser);
+        $("su-exit").href = normalHref(route);
+        const state = new DoorState(config.year, superuser, route.name);
+        const calendar = new Calendar(config, state, superuser, nameSeed(route.name));
         calendar.render();
-        // Switching between #/root and the normal view in the address bar reloads the app.
-        window.addEventListener("hashchange", () => {
-            if (isRootRoute() !== wantsRoot)
-                location.reload();
-        });
         // Re-check locks when the tab comes back (e.g. after the device slept past midnight UTC).
         document.addEventListener("visibilitychange", () => {
             if (document.visibilityState === "visible")
@@ -205,8 +222,12 @@ async function main() {
     }
     catch (err) {
         console.error(err);
-        $("status").textContent =
-            "Couldn't load doors.txt. Serve this folder over http(s) rather than opening the file directly.";
+        if (err instanceof ConfigNotFoundError && route.name) {
+            showError(`There's no calendar called "${route.name}" (${route.configFile} wasn't found).`);
+        }
+        else {
+            showError(`Couldn't load ${route.configFile}. Serve this folder over http(s) rather than opening the file directly.`, false);
+        }
     }
 }
 main();

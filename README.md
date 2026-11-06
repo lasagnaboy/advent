@@ -8,12 +8,14 @@ A single-page, responsive Advent calendar in plain HTML, CSS and TypeScript. It 
 advent-calendar/
 ├── index.html       Page shell: header, grid, image viewer, toast
 ├── styles.css       Responsive grid (4 columns on phones, 6 on wider screens) and the 3D door swing
-├── doors.txt        Configuration: day → image URL, plus title/year/superuser
+├── doors.txt        Default configuration: day → image URL, plus title/year/superuser
+├── salim.txt        Example named calendar, loaded at /#/salim
 ├── serve.mjs        Local dev server (routes /root to index.html)
 ├── _redirects       /root rewrite for Netlify / Cloudflare Pages
 ├── src/
 │   ├── config.ts    Fetches and parses doors.txt
 │   ├── state.ts     Reads and writes opened doors in a cookie
+│   ├── route.ts     Works out which calendar and mode the URL asks for
 │   └── main.ts      Date rules, rendering and event handling
 ├── dist/            Compiled JS (output of `npm run build`)
 ├── tsconfig.json
@@ -40,6 +42,25 @@ Lines starting with `#` are comments. Both `=` and `:` work as separators. Inval
 
 **Accessibility.** Doors are real `<button>`s with descriptive labels. The page works with the keyboard, and it respects `prefers-reduced-motion`.
 
+## Multiple calendars
+
+The part of the URL after `#/` picks the config file. Without it, `doors.txt` is used:
+
+| URL | Config file | Mode |
+|---|---|---|
+| `/` | `doors.txt` | normal |
+| `/#/salim` | `salim.txt` | normal |
+| `/#/root` or `/root` | `doors.txt` | superuser |
+| `/#/salim/root` or `/root#/salim` | `salim.txt` | superuser |
+
+To add a calendar, put a new `.txt` file next to `doors.txt` (for example `grandma.txt`) and share `/#/grandma`. It uses the same format as `doors.txt`.
+
+- **File names:** use lower-case letters, numbers, `-` or `_`. The URL is matched case-insensitively, so `/#/Salim` also loads `salim.txt`. Other characters are rejected, so a URL can't point the app at files outside the folder or at other sites.
+- **`root`** is reserved for superuser mode and can't be used as a calendar name.
+- **Separate progress:** each calendar keeps its own cookie (e.g. `advent_salim_2026`, plus `advent_salim_2026_root` in superuser mode).
+- **Separate settings:** each calendar has its own door layout. Its own `superuser=false` setting turns off superuser mode for that calendar only.
+- **Missing calendars:** if the file doesn't exist, the page says so and links back to the main calendar.
+
 ## Build and run
 
 ```bash
@@ -65,5 +86,4 @@ The `/root` path needs the server to send `index.html` for it:
 
 ## Hosting the app (free)
 
-These hosts serve static files over HTTPS: GitHub Pages, Netlify, and Cloudflare Pages. Upload `index.html`, `404.html`, `styles.css`, `doors.txt`, `_redirects` and `dist/`.
-# advent
+These hosts serve static files over HTTPS: GitHub Pages, Netlify, and Cloudflare Pages. Upload `index.html`, `404.html`, `styles.css`, `doors.txt` (plus any named calendar `.txt` files), `_redirects` and `dist/`.

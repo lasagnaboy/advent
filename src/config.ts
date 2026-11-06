@@ -65,9 +65,15 @@ function isHttpUrl(value: string): boolean {
   }
 }
 
+export class ConfigNotFoundError extends Error {
+  constructor(readonly path: string, readonly status: number) {
+    super(`Could not load ${path} (${status})`);
+  }
+}
+
 export async function loadConfig(path = "doors.txt"): Promise<CalendarConfig> {
-  // no-cache so edits to doors.txt show up without a hard refresh
+  // no-cache so edits to the config file show up without a hard refresh
   const res = await fetch(path, { cache: "no-cache" });
-  if (!res.ok) throw new Error(`Could not load ${path} (${res.status})`);
+  if (!res.ok) throw new ConfigNotFoundError(path, res.status);
   return parseConfig(await res.text());
 }

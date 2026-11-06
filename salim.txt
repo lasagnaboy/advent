@@ -1,0 +1,37 @@
+# Advent calendar configuration for #/salim
+# Format:  day=URL   (day is 1–24). Lines starting with # are ignored.
+# Optional settings:
+#   year=2026    Which December the calendar is for (defaults to the current year).
+#   title=...    Heading shown at the top of the page.
+#   superuser=false   Disables the /root debugging route. Set this before going live.
+#
+# Door N unlocks at 00:00 UTC on December N, based on the device's clock.
+
+title=Salim's Advent Calendar
+year=2026
+superuser=true
+
+1=https://picsum.photos/seed/salim-1/800/800
+2=https://picsum.photos/seed/salim-2/800/800
+3=https://picsum.photos/seed/salim-3/800/800
+4=https://picsum.photos/seed/salim-4/800/800
+5=https://picsum.photos/seed/salim-5/800/800
+6=https://picsum.photos/seed/salim-6/800/800
+7=https://picsum.photos/seed/salim-7/800/800
+8=https://picsum.photos/seed/salim-8/800/800
+9=https://picsum.photos/seed/salim-9/800/800
+10=https://picsum.photos/seed/salim-10/800/800
+11=https://picsum.photos/seed/salim-11/800/800
+12=https://picsum.photos/seed/salim-12/800/800
+13=https://picsum.photos/seed/salim-13/800/800
+14=https://picsum.photos/seed/salim-14/800/800
+15=https://picsum.photos/seed/salim-15/800/800
+16=https://picsum.photos/seed/salim-16/800/800
+17=https://picsum.photos/seed/salim-17/800/800
+18=https://picsum.photos/seed/salim-18/800/800
+19=https://picsum.photos/seed/salim-19/800/800
+20=https://picsum.photos/seed/salim-20/800/800
+21=https://picsum.photos/seed/salim-21/800/800
+22=https://picsum.photos/seed/salim-22/800/800
+23=https://picsum.photos/seed/salim-23/800/800
+24=https://picsum.photos/seed/salim-24/800/800

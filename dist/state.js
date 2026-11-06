@@ -2,13 +2,16 @@
  * Opened-door state, persisted in a cookie.
  * Cookie name includes the year so each December starts fresh:
  *   advent_2026=1.2.5.7
- * Superuser mode uses its own cookie (advent_2026_root) so debugging
- * never changes what a normal visitor on this device sees.
+ * Each named calendar gets its own cookie (advent_salim_2026), and
+ * superuser mode adds a suffix (advent_2026_root) so debugging never
+ * changes what a normal visitor on this device sees.
  */
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 export class DoorState {
-    constructor(year, superuser = false) {
-        this.name = `advent_${year}${superuser ? "_root" : ""}`;
+    /** `calendar` is the URL name (already restricted to A-Z, 0-9, - and _), or null for the default. */
+    constructor(year, superuser = false, calendar = null) {
+        const prefix = calendar ? `advent_${calendar.toLowerCase()}` : "advent";
+        this.name = `${prefix}_${year}${superuser ? "_root" : ""}`;
         this.opened = this.read();
     }
     isOpen(day) {
