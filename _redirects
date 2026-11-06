@@ -1,0 +1,3 @@
+# Netlify / Cloudflare Pages: serve the app at /root (superuser mode)
+/root    /index.html    200
+/root/   /index.html    200

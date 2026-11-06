@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Advent Calendar</title>
+  <script>
+    // When served at .../root or .../root/, resolve assets against the app folder.
+    (function () {
+      var m = location.pathname.match(/^(.*\/)root\/?$/);
+      if (m) {
+        var base = document.createElement("base");
+        base.href = m[1];
+        document.head.appendChild(base);
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="dist/main.js"></script>
+</head>
+<body>
+  <div id="su-banner" class="su-banner" hidden>
+    <strong>Superuser mode</strong> · every door can be opened · progress here is saved separately
+    · <a href="./">Exit</a>
+  </div>
+  <header class="site-header">
+    <h1 id="title">Advent Calendar</h1>
+    <p id="status" class="status" aria-live="polite"></p>
+  </header>
+
+  <main>
+    <ol id="calendar" class="calendar" aria-label="Advent calendar doors"></ol>
+  </main>
+
+  <dialog id="viewer" class="viewer">
+    <form method="dialog">
+      <button class="viewer-close" aria-label="Close">&times;</button>
+    </form>
+    <img id="viewer-img" alt="" />
+    <p id="viewer-caption" class="viewer-caption"></p>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <footer class="site-footer">
+    <button id="reset" class="link-button" type="button">Close all doors</button>
+  </footer>
+</body>
+</html>

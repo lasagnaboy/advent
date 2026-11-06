@@ -1,0 +1,13 @@
+{
+  "name": "advent-calendar",
+  "version": "1.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').copyFileSync('index.html','404.html')\"",
+    "watch": "tsc --watch",
+    "serve": "node serve.mjs 8080"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

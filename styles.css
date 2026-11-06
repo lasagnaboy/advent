@@ -1,0 +1,189 @@
+:root {
+  --bg: #0f2a1f;
+  --bg-pattern: #133526;
+  --ink: #fdf6e3;
+  --muted: #c9bfa5;
+  --door: #b3261e;
+  --door-alt: #8e1c16;
+  --door-edge: #e8c766;
+  --locked: #5a1410;
+  --radius: 10px;
+  --gap: clamp(8px, 2vw, 16px);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% 10%, var(--bg-pattern) 0 2px, transparent 3px) 0 0 / 40px 40px,
+    var(--bg);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+}
+
+.su-banner {
+  background: #f2c94c;
+  color: #222;
+  text-align: center;
+  padding: 8px 16px;
+  font-size: .9rem;
+}
+.su-banner[hidden] { display: none; }
+.su-banner a { color: inherit; }
+
+.site-header {
+  text-align: center;
+  padding: clamp(16px, 4vw, 40px) 16px 8px;
+}
+.site-header h1 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.8rem, 6vw, 3rem);
+  letter-spacing: 0.02em;
+}
+.status { margin: 6px 0 0; color: var(--muted); }
+
+main {
+  flex: 1;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* ---------- Grid ---------- */
+.calendar {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--gap);
+  grid-template-columns: repeat(4, 1fr);           /* phones */
+}
+@media (min-width: 600px) { .calendar { grid-template-columns: repeat(6, 1fr); } }
+
+.cell {
+  aspect-ratio: 1;
+  perspective: 900px;
+  position: relative;
+}
+
+/* The picture behind the door */
+.behind {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  background: #000 center / cover no-repeat;
+  box-shadow: inset 0 0 0 3px rgba(0,0,0,.4);
+  overflow: hidden;
+}
+
+/* The door itself */
+.door {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 2px solid var(--door-edge);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--door), var(--door-alt));
+  color: var(--ink);
+  font: 700 clamp(1.4rem, 5vw, 2.2rem) Georgia, serif;
+  cursor: pointer;
+  transform-origin: left center;
+  transition: transform .8s cubic-bezier(.3,.7,.3,1), box-shadow .2s;
+  backface-visibility: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,.35);
+}
+.door:hover { box-shadow: 0 6px 16px rgba(0,0,0,.5); }
+.door:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+.cell:nth-child(3n) .door { --door: #1e6b3a; --door-alt: #144d29; }
+.cell:nth-child(5n) .door { --door: #b07c1e; --door-alt: #8a5f14; }
+
+.cell.locked .door {
+  cursor: not-allowed;
+  filter: saturate(.55) brightness(.8);
+}
+.cell.locked .door::after {
+  content: "🔒";
+  position: absolute;
+  bottom: 6px; right: 8px;
+  font-size: .9rem;
+  opacity: .7;
+}
+
+/* Opened state: swing the door, keep the image clickable */
+.cell.open .door {
+  transform: rotateY(-105deg);
+  pointer-events: none;
+}
+.cell.open .behind { cursor: zoom-in; }
+
+.shake { animation: shake .4s; }
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* ---------- Image viewer ---------- */
+.viewer {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  max-width: min(92vw, 720px);
+  color: var(--ink);
+}
+.viewer::backdrop { background: rgba(0,0,0,.8); }
+.viewer img {
+  display: block;
+  width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: var(--radius);
+}
+.viewer-caption { text-align: center; margin: 8px 0 0; }
+.viewer-close {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 40px; height: 40px;
+  border: 0; border-radius: 50%;
+  background: rgba(0,0,0,.6);
+  color: #fff;
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translate(-50%, 20px);
+  background: #fdf6e3;
+  color: #222;
+  padding: 10px 16px;
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s, transform .25s;
+  max-width: calc(100vw - 32px);
+  text-align: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+.site-footer { text-align: center; padding: 16px; }
+.link-button {
+  background: none; border: 0; color: var(--muted);
+  text-decoration: underline; cursor: pointer; font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .door, .toast { transition: none; }
+  .shake { animation: none; }
+}

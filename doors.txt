@@ -1,0 +1,42 @@
+# Advent calendar configuration
+# Format:  day=URL   (day is 1–24). Lines starting with # are ignored.
+# Optional settings:
+#   year=2026    Which December the calendar is for (defaults to the current year).
+#   title=...    Heading shown at the top of the page.
+#   superuser=false   Disables the /root debugging route. Set this before going live.
+#
+# Door N unlocks at 00:00 UTC on December N, based on the device's clock.
+
+title=Advent Calendar 2026
+year=2026
+superuser=true
+
+#1=https://picsum.photos/id/1015/800/800
+#2=https://picsum.photos/id/1016/800/800
+#3=https://picsum.photos/id/1018/800/800
+#4=https://picsum.photos/id/1019/800/800
+1=images/1.jpeg
+2=images/2.jpeg
+3=images/3.jpeg
+4=images/4.jpeg
+
+5=https://picsum.photos/id/1020/800/800
+6=https://picsum.photos/id/1021/800/800
+7=https://picsum.photos/id/1022/800/800
+8=https://picsum.photos/id/1024/800/800
+9=https://picsum.photos/id/1025/800/800
+10=https://picsum.photos/id/1026/800/800
+11=https://picsum.photos/id/1027/800/800
+12=https://picsum.photos/id/1028/800/800
+13=https://picsum.photos/id/1029/800/800
+14=https://picsum.photos/id/1031/800/800
+15=https://picsum.photos/id/1035/800/800
+16=https://picsum.photos/id/1036/800/800
+17=https://picsum.photos/id/1037/800/800
+18=https://picsum.photos/id/1039/800/800
+19=https://picsum.photos/id/1040/800/800
+20=https://picsum.photos/id/1041/800/800
+21=https://picsum.photos/id/1042/800/800
+22=https://picsum.photos/id/1043/800/800
+23=https://picsum.photos/id/1044/800/800
+24=https://picsum.photos/id/1047/800/800
