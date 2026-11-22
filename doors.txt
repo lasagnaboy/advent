@@ -1,5 +1,10 @@
 # Advent calendar configuration
 # Format:  day=URL   (day is 1–24). Lines starting with # are ignored.
+#   The URL can be a YouTube link (plays in a lightbox) or an image URL:
+#     7=https://www.youtube.com/watch?v=VIDEO_ID
+#     8=https://youtu.be/VIDEO_ID?t=45        (starts 45 seconds in)
+#     9=https://www.youtube.com/shorts/VIDEO_ID   (shown portrait)
+#    10=images/10.jpeg
 # Optional settings:
 #   year=2026    Which December the calendar is for (defaults to the current year).
 #   title=...    Heading shown at the top of the page.

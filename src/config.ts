@@ -1,11 +1,24 @@
+/** What sits behind a door. */
+export type DoorContent =
+  | { kind: "image"; url: string }
+  | {
+      kind: "video";
+      /** 11-character YouTube video id */
+      id: string;
+      /** Start offset in seconds (from ?t= / ?start=), if any */
+      start?: number;
+      /** true for /shorts/ links, which are 9:16 portrait */
+      vertical: boolean;
+    };
+
 /** Parsed contents of doors.txt */
 export interface CalendarConfig {
   title: string;
   year: number;
   /** Whether the /root superuser route is allowed (default true). */
   superuser: boolean;
-  /** day (1–24) -> image URL */
-  images: Map<number, string>;
+  /** day (1–24) -> image or YouTube video */
+  doors: Map<number, DoorContent>;
 }
 
 export const DAYS = 24;
@@ -14,20 +27,21 @@ export const DAYS = 24;
  * Parse the plain-text config.
  *   - blank lines and lines starting with # are ignored
  *   - "key=value" (also accepts "key: value")
- *   - numeric keys 1–24 are image URLs; "title", "year", "superuser" are settings
+ *   - numeric keys 1–24 are a YouTube link or an image URL; "title", "year", "superuser" are settings
  */
 export function parseConfig(text: string): CalendarConfig {
   const config: CalendarConfig = {
     title: "Advent Calendar",
     year: new Date().getUTCFullYear(),
     superuser: true,
-    images: new Map(),
+    doors: new Map(),
   };
 
   text.split(/\r?\n/).forEach((raw, i) => {
     const line = raw.trim();
     if (!line || line.startsWith("#")) return;
 
+    // Split on the first "=" or ":" — URLs contain ":" too, so the key must come first.
     const match = line.match(/^([^=:]+?)\s*[=:]\s*(.+)$/);
     if (!match) {
       console.warn(`doors.txt line ${i + 1} ignored: "${line}"`);
@@ -45,15 +59,72 @@ export function parseConfig(text: string): CalendarConfig {
       config.superuser = !/^(false|off|no|0)$/i.test(value);
     } else if (/^\d+$/.test(key)) {
       const day = Number(key);
-      if (day >= 1 && day <= DAYS && isHttpUrl(value)) {
-        config.images.set(day, value);
+      const content = parseDoorValue(value);
+      if (day >= 1 && day <= DAYS && content) {
+        config.doors.set(day, content);
       } else {
-        console.warn(`doors.txt line ${i + 1}: invalid day or URL`);
+        console.warn(`doors.txt line ${i + 1}: invalid day, YouTube link or URL`);
       }
     }
   });
 
   return config;
+}
+
+function parseDoorValue(value: string): DoorContent | null {
+  const video = parseYouTube(value);
+  if (video) return video;
+  return isHttpUrl(value) ? { kind: "image", url: value } : null;
+}
+
+const YT_ID = /^[A-Za-z0-9_-]{11}$/;
+
+/**
+ * Accepts the usual YouTube link shapes:
+ *   https://www.youtube.com/watch?v=ID[&t=90s]
+ *   https://youtu.be/ID[?t=90]
+ *   https://www.youtube.com/shorts/ID
+ *   https://www.youtube.com/embed/ID[?start=90]
+ *   https://www.youtube.com/live/ID
+ *   https://m.youtube.com/..., https://music.youtube.com/..., youtube-nocookie.com/embed/ID
+ */
+export function parseYouTube(value: string): DoorContent | null {
+  let u: URL;
+  try {
+    u = new URL(value);
+  } catch {
+    return null;
+  }
+  const host = u.hostname.replace(/^(www|m|music)\./, "");
+  const parts = u.pathname.split("/").filter(Boolean);
+  let id: string | null = null;
+  let vertical = false;
+
+  if (host === "youtu.be") {
+    id = parts[0] ?? null;
+  } else if (host === "youtube.com" || host === "youtube-nocookie.com") {
+    if (parts[0] === "watch") id = u.searchParams.get("v");
+    else if (["embed", "shorts", "live", "v"].includes(parts[0])) {
+      id = parts[1] ?? null;
+      vertical = parts[0] === "shorts";
+    }
+  } else {
+    return null;
+  }
+
+  if (!id || !YT_ID.test(id)) return null;
+  const start = parseStart(u.searchParams.get("t") ?? u.searchParams.get("start"));
+  return { kind: "video", id, start, vertical };
+}
+
+/** "90", "90s", "1m30s", "1h2m3s" -> seconds */
+function parseStart(t: string | null): number | undefined {
+  if (!t) return undefined;
+  if (/^\d+s?$/.test(t)) return parseInt(t, 10);
+  const m = t.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/);
+  if (!m || !t) return undefined;
+  const secs = Number(m[1] ?? 0) * 3600 + Number(m[2] ?? 0) * 60 + Number(m[3] ?? 0);
+  return secs > 0 ? secs : undefined;
 }
 
 function isHttpUrl(value: string): boolean {
