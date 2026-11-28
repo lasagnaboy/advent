@@ -1,3 +1,7 @@
+title=A Calendar About The Moon
+year=2026
+superuser=true
+
 1=images/moon/1.jpg
 2=https://youtu.be/UdkDkWPXzmc?si=TUm7pgJg5s9r2-fH
 3=images/moon/2.jpg
