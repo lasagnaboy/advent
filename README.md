@@ -6,10 +6,9 @@ A single-page, responsive Advent calendar in plain HTML, CSS and TypeScript. It 
 
 ```
 advent-calendar/
-├── index.html       Page shell: header, grid, image viewer, toast
+├── index.html       Page shell: header, grid, lightbox, toast
 ├── styles.css       Responsive grid (4 columns on phones, 6 on wider screens) and the 3D door swing
-├── doors.txt        Default configuration: day → image URL, plus title/year/superuser
-├── salim.txt        Example named calendar, loaded at /#/salim
+├── doors.txt        Configuration: day → YouTube link or image URL, plus title/year/superuser
 ├── serve.mjs        Local dev server (routes /root to index.html)
 ├── _redirects       /root rewrite for Netlify / Cloudflare Pages
 ├── src/
@@ -32,13 +31,18 @@ advent-calendar/
 ```
 title=Advent Calendar 2026
 year=2026
-1=https://example.com/day1.jpg
-2=https://example.com/day2.jpg
+1=https://www.youtube.com/watch?v=VIDEO_ID
+2=https://youtu.be/VIDEO_ID?t=45
+3=https://www.youtube.com/shorts/VIDEO_ID
+4=https://example.com/day4.jpg
 ...
 ```
+Each day can be a YouTube link or an image URL, and you can mix the two. YouTube links can be `watch?v=`, `youtu.be/`, `shorts/`, `embed/` or `live/` links. A `t=` or `start=` in the link sets where playback begins, and Shorts open in a portrait player.
 Lines starting with `#` are comments. Both `=` and `:` work as separators. Invalid lines are skipped, and a warning is logged in the browser console.
 
-**Layout.** The door numbers are shuffled into the same order on every visit, the way a printed calendar scatters them. An image is attached only when its door is opened. Clicking an opened door shows the image full size.
+**Layout.** The door numbers are shuffled into the same order on every visit, the way a printed calendar scatters them. Content is attached only when its door is opened. Clicking an opened door shows the image full size.
+
+**Videos.** When a video door is opened, it swings back to show the video's thumbnail with a play badge, and the video starts in a lightbox. Clicking the thumbnail later opens the lightbox again. The player is a `youtube-nocookie.com` embed, so YouTube sets no cookies until the visitor presses play. Closing the lightbox (×, Esc or clicking outside it) removes the player, which stops playback. If a video's owner has turned off embedding, the player shows an error, and the caption's **Watch on YouTube** link opens it on YouTube instead. Embeds need the page to be served over http(s), as they refuse to play without a Referer.
 
 **Accessibility.** Doors are real `<button>`s with descriptive labels. The page works with the keyboard, and it respects `prefers-reduced-motion`.
 

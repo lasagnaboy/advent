@@ -49,12 +49,57 @@ function toast(message) {
     window.clearTimeout(toastTimer);
     toastTimer = window.setTimeout(() => el.classList.remove("show"), 3000);
 }
-function showImage(day, url) {
+/* ---------- Lightbox ---------- */
+function youTubeEmbedUrl(id, start) {
+    // youtube-nocookie: no YouTube cookies are set until the visitor presses play.
+    const params = new URLSearchParams({ autoplay: "1", rel: "0", playsinline: "1" });
+    if (start)
+        params.set("start", String(start));
+    return `https://www.youtube-nocookie.com/embed/${id}?${params}`;
+}
+function youTubeWatchUrl(id, start) {
+    return `https://www.youtube.com/watch?v=${id}${start ? `&t=${start}s` : ""}`;
+}
+/** Small still shown behind an opened video door. hqdefault exists for every video. */
+function youTubeThumb(id) {
+    return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+}
+/** URL to show as the tile background behind an opened door. */
+function tileImage(content) {
+    return content.kind === "video" ? youTubeThumb(content.id) : content.url;
+}
+function openViewer(day, content) {
     const dialog = $("viewer");
-    const img = $("viewer-img");
-    img.src = url;
-    img.alt = `Picture for December ${day}`;
-    $("viewer-caption").textContent = `December ${day}`;
+    const stage = $("viewer-stage");
+    const caption = $("viewer-caption");
+    stage.replaceChildren();
+    caption.replaceChildren(`December ${day}`);
+    if (content.kind === "image") {
+        dialog.classList.remove("is-video", "is-vertical");
+        const img = document.createElement("img");
+        img.src = content.url;
+        img.alt = `Picture for December ${day}`;
+        stage.append(img);
+    }
+    else {
+        dialog.classList.add("is-video");
+        dialog.classList.toggle("is-vertical", content.vertical);
+        const frame = document.createElement("iframe");
+        frame.src = youTubeEmbedUrl(content.id, content.start);
+        frame.title = `Video for December ${day}`;
+        frame.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+        frame.allowFullscreen = true;
+        // YouTube refuses to play embeds that arrive with no Referer (error 153).
+        frame.referrerPolicy = "strict-origin-when-cross-origin";
+        stage.append(frame);
+        // Fallback for videos whose owner has turned off embedding.
+        const link = document.createElement("a");
+        link.href = youTubeWatchUrl(content.id, content.start);
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.textContent = "Watch on YouTube";
+        caption.append(" · ", link);
+    }
     dialog.showModal();
 }
 function preload(url) {
@@ -93,8 +138,8 @@ class Calendar {
             v.door.setAttribute("aria-label", open ? `Open door ${v.day}` : `Door ${v.day}, opens ${describeUnlock(v.day, this.config.year)}`);
             if (open && this.state.isOpen(v.day))
                 this.reveal(v);
-            else if (open && v.url)
-                preload(v.url);
+            else if (open && v.content)
+                preload(tileImage(v.content));
         }
         this.updateStatus();
         this.scheduleNextUnlock();
@@ -126,9 +171,13 @@ class Calendar {
                 : `${this.state.count} of ${available} available doors opened`;
     }
     reveal(v) {
-        // Image is only attached once the door is opened, so it can't be peeked via the DOM.
-        if (v.url)
-            v.behind.style.backgroundImage = `url("${v.url.replace(/"/g, "%22")}")`;
+        // Content is only attached once the door is opened, so it can't be peeked via the DOM.
+        if (v.content) {
+            const url = tileImage(v.content);
+            v.behind.style.backgroundImage = `url("${url.replace(/"/g, "%22")}")`;
+            v.behind.classList.toggle("video", v.content.kind === "video");
+            v.behind.setAttribute("aria-label", `${v.content.kind === "video" ? "Play video" : "View picture"} for December ${v.day}`);
+        }
         v.cell.classList.add("open");
         v.behind.tabIndex = 0;
     }
@@ -139,12 +188,11 @@ class Calendar {
         behind.className = "behind";
         behind.setAttribute("role", "button");
         behind.tabIndex = -1;
-        behind.setAttribute("aria-label", `View picture for December ${day}`);
         const door = document.createElement("button");
         door.className = "door";
         door.type = "button";
         door.textContent = String(day);
-        const view = { day, url: this.config.images.get(day), cell, door, behind };
+        const view = { day, content: this.config.doors.get(day), cell, door, behind };
         door.addEventListener("click", () => {
             // Check the clock at click time, not just at page load.
             if (!this.canOpen(day)) {
@@ -154,13 +202,20 @@ class Calendar {
                 toast(`Patience! Door ${day} opens ${describeUnlock(day, this.config.year)}.`);
                 return;
             }
-            if (!view.url)
-                toast(`No picture configured for day ${day}.`);
+            if (!view.content)
+                toast(`Nothing configured for day ${day}.`);
+            const firstOpen = !this.state.isOpen(day);
             this.state.open(day);
             this.reveal(view);
             this.updateStatus();
+            // A video starts in the lightbox as soon as the door has swung open.
+            if (firstOpen && view.content?.kind === "video") {
+                const content = view.content;
+                const swing = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 700;
+                window.setTimeout(() => openViewer(day, content), swing);
+            }
         });
-        const show = () => view.url && cell.classList.contains("open") && showImage(day, view.url);
+        const show = () => view.content && cell.classList.contains("open") && openViewer(day, view.content);
         behind.addEventListener("click", show);
         behind.addEventListener("keydown", (e) => {
             if (e.key === "Enter" || e.key === " ") {
@@ -219,6 +274,8 @@ async function main() {
         const dialog = $("viewer");
         dialog.addEventListener("click", (e) => { if (e.target === dialog)
             dialog.close(); });
+        // Removing the iframe on close (button, Esc or backdrop) is what stops the video.
+        dialog.addEventListener("close", () => $("viewer-stage").replaceChildren());
     }
     catch (err) {
         console.error(err);
